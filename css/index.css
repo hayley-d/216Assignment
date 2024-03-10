@@ -1,0 +1,27 @@
+#landing{
+    width:100vw;
+    height:80vh;
+    background-image: url("../img/landing.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+}
+
+#landing > div{
+    display: flex;
+    width: 40vw;
+    height:80vh;
+    margin:50px;
+    align-items: center;
+    font-size: 35px;
+    color: #231f20;
+}
+
+@media (max-width: 1000px){
+    #landing > div{
+        width: 50vw;
+        font-size: 25px;
+    }
+}

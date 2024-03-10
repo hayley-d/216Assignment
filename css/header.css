@@ -1,0 +1,97 @@
+*{
+    font-family: "Montserrat", sans-serif;
+    margin:0;
+    padding:0;
+}
+
+header{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap:10px;
+    width:100vw;
+    height:15vh;
+    background-color: #f26a8d;
+    color: white;
+    justify-content: center;
+    align-items: center;
+    margin:10px;
+    font-size: 20px;
+    min-height: 100px;
+}
+
+header > div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header{
+    width:100vw;
+    height:15vh;
+    background-color: #f26a8d;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    height:fit-content;
+    min-height: 100px;
+}
+
+body{
+    background-color: #231f20;
+    overflow-x: hidden;
+}
+
+.logo{
+    width:100px;
+    height:100px;
+    background-image: url("../img/logo.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-color: white;
+}
+
+.userProfile{
+    width:100px;
+    height:100px;
+    background-image: url("../img/sloth.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-color: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.userProfile:hover{
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.8);
+}
+
+a{
+    text-decoration: inherit;
+    color: white;
+    cursor: pointer;
+}
+
+a:hover{
+    color: #231f20;
+}
+
+@media (max-width: 1200px){
+
+    .logo{
+        width:90px;
+        height:90px;
+    }
+
+    .userProfile{
+        width:90px;
+        height:90px;
+    }
+}
+
+#user-profile{
+    display: flex;
+    gap:20px;
+}
+
