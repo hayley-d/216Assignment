@@ -1,3 +1,8 @@
+*{
+    padding:0;
+    margin:0;
+}
+
 #landing{
     width:100vw;
     height:80vh;
@@ -18,6 +23,8 @@
     font-size: 35px;
     color: #231f20;
 }
+
+
 
 @media (max-width: 1000px){
     #landing > div{

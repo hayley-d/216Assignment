@@ -43,7 +43,7 @@ form > div{
     align-items: center;
 }
 
-input[type="text"]{
+input{
     font-size: 15px;
     border-radius: 10px;
     outline: none;

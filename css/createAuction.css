@@ -1,0 +1,130 @@
+*{
+    font-family: "Montserrat", sans-serif;
+    margin:0;
+    padding:0;
+}
+
+body{
+    padding:40px;
+    background-color: #231f20;
+    color: white;
+}
+
+.back-btn{
+    background-color: white;
+    color: #231f20;
+    font-size: 16px;
+    padding:10px 20px;
+    border-radius: 20px;
+    width:fit-content;
+    height: fit-content;
+}
+
+a{
+    text-decoration: none;
+    color: inherit;
+}
+
+.heading{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 25px;
+}
+
+.form-container{
+    display: flex;
+    justify-content: center;
+    padding:50px;
+
+}
+
+form{
+    background-color: white;
+    border-radius: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(14,1fr);
+    gap:30px;
+    width:20vw;
+    min-width: fit-content;
+    min-height: fit-content;
+    padding:40px;
+    justify-content: center;
+    align-items: center;
+    color: #231f20;
+}
+.form-element{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-element > label {
+    font-weight: bold;
+
+}
+
+input[type="text"],input[type="number"],input[type="datetime-local"]{
+    padding:10px;
+    border-radius: 10px;
+    border:none;
+    outline: none;
+    background-color: lightgrey;
+    color: #231f20;
+    width:300px;
+    min-width: 200px;
+}
+
+textarea{
+    padding:10px;
+    border-radius: 10px;
+    border:none;
+    outline: none;
+    background-color: lightgrey;
+    color: #231f20;
+}
+
+input[type="file"]{
+    border-radius: 10px;
+    border:none;
+    outline: none;
+    background-color: lightgrey;
+    padding:20px;
+}
+
+
+#submit{
+    border-radius: 10px;
+    border:none;
+    outline: none;
+    background-color: #f26a8d;
+    padding:10px;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+    width: fit-content;
+}
+
+#submit:hover{
+    background-color: #231f20;
+    color: white;
+}
+
+.button-element{
+    display: flex;
+    justify-content: center;
+    grid-column: span 2;
+}
+
+
+#prop-heading{
+    width:100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #f26a8d;
+    grid-column: span 2;
+    font-size: 30px;
+}
