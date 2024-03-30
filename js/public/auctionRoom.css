@@ -1,0 +1,244 @@
+*{
+    font-family: "Montserrat", sans-serif;
+    margin:0;
+    padding:0;
+}
+
+body{
+    padding:40px;
+    background-color: #231f20;
+    color: white;
+    overflow-x: hidden;
+}
+
+.heading{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 25px;
+    margin-bottom: 50px;
+}
+
+.auction-container{
+    display: flex;
+    flex-direction: column;
+    gap:20px;
+    align-items: center;
+    margin-bottom: 30px;
+    width:100vw;
+    height:fit-content;
+
+}
+
+.auction-image{
+    width:60%;
+    height:40vh;
+    background-color: white;
+    border-radius: 20px;
+    margin:0;
+    padding:0;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("../../../img/sloth.webp");
+}
+
+h2{
+    color: #f26a8d;
+}
+
+.property-container{
+    width:100vw;
+    height:fit-content;
+    display: flex;
+    flex-direction: column;
+    gap:20px;
+    align-items: center;
+    border-radius: 20px;
+    margin:0;
+    color: #231f20;
+    overflow-x: hidden;
+}
+
+.property-card{
+    width:80%;
+    margin:40px;
+    height:fit-content;
+    background-color: white;
+    border-radius: 20px;
+    color: #231f20;
+    display: flex;
+    flex-direction: column;
+    gap:20px;
+    align-items: center;
+    padding:30px;
+}
+
+.property-title{
+    font-size: 30px;
+}
+
+.property-location{
+    font-size: 20px;
+}
+
+.property-details{
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    font-size: 18px;
+}
+
+.property-amenities{
+    margin-top:30px;
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    font-size: 18px;
+    column-gap: 100px;
+    row-gap: 30px;
+}
+
+.property-amenities > div{
+    display: flex;
+    gap:20px;
+    align-items: center;
+}
+
+.property-details > div{
+    display: flex;
+    gap:20px;
+    align-items: center;
+    margin-left:30px;
+}
+
+.bed{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("../../../img/bed.svg");
+    width: 30px;
+    height: 30px;
+}
+
+.bath{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("../../../img/bath.svg");
+    width: 30px;
+    height: 30px;
+}
+
+.parking{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("../../../img/car.svg");
+    width: 30px;
+    height: 30px;
+}
+
+.pin{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("../../../img/amen.svg");
+    width: 30px;
+    height: 30px;
+}
+
+.bid-container{
+    width:100vw;
+    height:fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap:30px;
+}
+
+#bid-form{
+    background-color: white;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap:30px;
+    align-items: center;
+    width:50%;
+    height:fit-content;
+    padding:20px;
+    color: #231f20;
+}
+
+#bid-form > div{
+    display: flex;
+    gap:30px;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.submit-btn{
+    background-color: #f26a8d;
+    color: white;
+    font-size: 16px;
+    padding:10px 20px;
+    border-radius: 20px;
+    width:fit-content;
+    border: none;
+    height: fit-content;
+    cursor: pointer;
+}
+
+.submit-btn:hover{
+    background-color: #231f20;
+}
+
+.back-btn{
+    background-color: white;
+    color: #231f20;
+    font-size: 16px;
+    padding:10px 20px;
+    border-radius: 20px;
+    width:fit-content;
+    height: fit-content;
+}
+
+a{
+    text-decoration: none;
+    color: inherit;
+}
+
+#auction-room{
+    margin-bottom: 40px;
+    /*display: block;*/
+    display: none;
+}
+
+#auction-code-container{
+    display: flex;
+    justify-content: center;
+    width:100vw;
+}
+
+
+#auction-code-form{
+    background-color: white;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap:30px;
+    align-items: center;
+    width:50%;
+    height:fit-content;
+    padding:20px;
+    color: #231f20;
+}
+
+input{
+    font-size: 16px;
+    padding:10px;
+    border-radius: 10px;
+    background-color: lightgrey;
+    border: none;
+    outline: none;
+    color: #231f20;
+}
