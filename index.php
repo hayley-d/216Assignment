@@ -1,12 +1,17 @@
 
 <?php
 require './header.php';
+require_once './includes/index_view.php';
 ?>
 <!--CHANGE COOKIE DOMAIN PARAM BEFORE UPLAOD-->
-<section id="landing">
-    <div><h3>Discover Your Dream Home at Aperture Auctions</h3></div>
+<!--display ongoing auctions hosted by user-->
+<?php
+display_auctions();
+?>
+<section id="hosted-container">
 
 </section>
+<?php require './auctions.php'; ?>
 <?php require './footer.php'; ?>
 </body>
 </html>
