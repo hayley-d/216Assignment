@@ -23,12 +23,12 @@ require_once '../config_session.php';
         <div>
             <label for="username">Username</label>
         </div>
-        <div><input type="text" id="username" name="username" placeholder="Enter username"></div>
+        <div><input type="text" id="username" name="username" placeholder="Enter username" required></div>
 
         <div>
             <label for="password">Password</label>
         </div>
-        <div><input type="password" id="password" name="password" placeholder="Enter password"></div>
+        <div><input type="password" id="password" name="password" placeholder="Enter password" required></div>
 
         <div class="submit"><button type="submit" onclick="validateInformation()">Sign up</button></div>
 

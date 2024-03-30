@@ -32,13 +32,21 @@ function header_user_status(){
         //user is logged in
         //display logout btn
         ?>
-        <div class="userProfile"><?php echo $_SESSION['username']?></div>
-        <div><a href="./includes/logout.php">Logout</a></div>
+        <div><a href="http://localhost:2043/">Join Auction</a></div>
+        <div><a href="./createAuction.php">Create Auction</a></div>
+        <div id="user-profile">
+            <div class="userProfile">Hi <?php echo $_SESSION['username']?></div>
+            <div><a href="./includes/logout.php">Logout</a></div>
+        </div>
         <?php
     }
     else{
         ?>
-        <div><a href="./includes/login.php">Login</a></div>
+        <div><a></a></div>
+        <div><a></a></div>
+        <div id="user-profile">
+            <div><a href="./includes/login.php">Login</a></div>
+        </div>
         <?php
     }
 }
