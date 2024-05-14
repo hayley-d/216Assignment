@@ -7,6 +7,7 @@ const path = require('path');
 const axios = require('axios');
 
 
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -15,17 +16,16 @@ const io = socketIo(server, {
     },
 });
 
-app.use(express.static(path.join(__dirname, '')));
+
+app.use(express.static('../front_end'));
 
 // Set the view engine to EJS
 app.set('views', path.join('views'));
 app.set('view engine', 'ejs');
 
-const data = {
-    name: "Hayley",
-
-};
-
+let data={
+    name:"Hayley"
+}
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -34,6 +34,26 @@ app.use((err, req, res, next) => {
 
 app.get('/', (req, res) => {
     res.render('auctionRoom', data);
+});
+
+// API endpoint to fetch data from PHP API
+app.post('/api', async (req, res) => {
+    try {
+        const { type, code } = req.body;
+        if (!type || !code) {
+            throw new Error('Invalid request. Missing parameters.');
+        }
+
+        // Make API call to PHP API with parameters
+        const response = await axios.post('http://localhost:80/api.php', { type, code });
+        const data = response.data;
+
+        // Render EJS template with data
+        res.render('auctionRoom', data);
+    } catch (error) {
+        console.error('Error fetching data from API:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 
@@ -117,6 +137,7 @@ function startServer(port) {
 
         socket.on('joinAuction', async (code) => {
             try {
+
                 // Basic code validation (replace with your specific requirements)
                 if (!code || code.trim().length === 0) {
                     throw new Error('Invalid auction code: empty input');
@@ -124,14 +145,15 @@ function startServer(port) {
 
                 // Make the API call using Axios
                 const response = await axios.post(
-                    '../api.php',
+                    '/api.php',
                     {
                         type: 'GetAuction',
                         code: code
                     }
                 );
-                const auctionData = response.data;
 
+                const auctionData = response.data;
+                console.log(`Auction data retrieved: ${JSON.stringify(auctionData)}`);
 
                 if (!auctionData || !auctionData.name || !auctionData['highest_bid']) {
                     throw new Error('Invalid auction data received from API');
@@ -146,12 +168,18 @@ function startServer(port) {
                 socket.emit('auctionJoined', auctionData);
             } catch (error) {
                 console.error('Error joining auction:', error.message);
-                socket.emit('joinError', error.message);
+                if (error.response && error.response.data) {
+                    console.error('Server error message:', error.response.data.message);
+                }
             }
         });
 
+        socket.on('send', (data) => {
+            io.emit('chat', data);
+        });
+
         // Emit the io instance to the client
-        socket.emit('connect-with-io', io);
+        //socket.emit('connect-with-io', io);
     });
 }
 
