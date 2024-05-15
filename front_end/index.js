@@ -1,15 +1,30 @@
 const socket = new io('http://localhost:2043');
 
-socket.on('chat', (data) => {
-    // console.log(data);
-    const chat = document.getElementById('chat-messages');
-    const p = document.createElement('p');
-    p.innerHTML = data;
-    chat.appendChild(p);
+socket.on('connect', ()=>{
+    console.log(`Client connected: ${socket.id}`);
 });
 
-function sendMessage(){
-    const message = document.getElementById('message').value;
-    socket.emit('send', message);
-    document.getElementById('message').value = '';
+socket.on('update-bid',amount =>{
+    console.log("Updated Bid: " + amount);
+})
+
+socket.on('auctionJoined', (data) => {
+    // console.log(data);
+    console.log(data);
+});
+
+
+//Sends the auction code to the server
+function sendCode()
+{
+    //Get the code from the input
+    const code = $('#auctionCode').val();
+    //Send the code to the server
+    socket.emit('joinAuction', code);
+    //Hide the code area
+    ('#auction-code-container').hide();
+}
+
+function showAuction(){
+    $('#auction-room').show();
 }
