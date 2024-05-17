@@ -213,6 +213,21 @@ class auctionApi
                 'auction_code' => $auction_code
             ];
 
+            $stmt->close();
+
+            //Get the property data
+            $obj = $this->getProperty($auction_data['property_id']);
+
+            $auction_data['property_title'] = $obj['title'];
+            $auction_data['property_location'] = $obj['location'];
+            $auction_data['property_price'] = $obj['price'];
+            $auction_data['property_bedrooms'] = $obj['bedroom'];
+            $auction_data['property_bathrooms'] = $obj['bathroom'];
+            $auction_data['property_parking'] = $obj['parking'];
+            $auction_data['property_amenities'] = $obj['amenities'];
+            $auction_data['property_description'] = $obj['description'];
+            $auction_data['property_image'] = $obj['image_path'];
+
             header('Content-Type: application/json');
             http_response_code(200);
             $timestamp = round(microtime(true) * 1000);
@@ -279,39 +294,98 @@ class auctionApi
 
     public function getProperty( $propertyId)
     {
-        // Sanitize and validate parameters
-        $propertyId = filter_var($propertyId, FILTER_SANITIZE_NUMBER_INT);
-        global $db;
-        $query = "SELECT * FROM properties WHERE property_id = ?";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("s", $propertyId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            $results = $result->fetch_all(MYSQLI_ASSOC);
-            return $results;
-        } else {
-            $this->response(false, "Property not found");
-            return null;
+        $propertyId = (int) $propertyId;
+        try{
+            // Sanitize and validate parameters
+            $propertyId = (int) filter_var($propertyId, FILTER_SANITIZE_NUMBER_INT);
+            global $db;
+            $query = "SELECT * FROM `properties` WHERE `property_id` = ?";
+            $stmt = $db->prepare($query);
+
+            if (!$stmt) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => 'Failed to prepare query'
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+
+            $stmt->bind_param("i", $propertyId);
+
+            $stmt->execute();
+
+            // Bind the result variable
+            $stmt->bind_result($property_id, $title, $price, $location, $bedroom, $bathroom, $parking,$amenities,$description,$image_path);
+
+            // Fetch the result
+            if ($stmt->fetch()) {
+                // Return the property data
+                return [
+                    'property_id' => $property_id,
+                    'title' => $title,
+                    'price' => $price,
+                    'location' => $location,
+                    'bedroom' => $bedroom,
+                    'bathroom' => $bathroom,
+                    'parking' => $parking,
+                    'amenities' => $amenities,
+                    'description' => $description,
+                    'image_path' =>$image_path,
+
+                ];
+            } else {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => 'No property found'
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+        }
+        catch(Exception $e)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
         }
     }
 
-    public function getUser( $userId)
+    public function getUser( $email)
     {
-        // Sanitize and validate parameters
-        $userId = filter_var($userId, FILTER_SANITIZE_NUMBER_INT);
         global $db;
-        $query = "SELECT * FROM users WHERE id = ?";
+        $query = "SELECT * FROM users WHERE email = ?";
+
         $stmt = $db->prepare($query);
-        $stmt->bind_param("i", $userId);
+
+        $stmt->bind_param("s", $email);
+
         $stmt->execute();
+
         $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            $results = $result->fetch_all(MYSQLI_ASSOC);
-            $this->response(true,$results);
+
+        if ($result->num_rows > 0)
+        {
+            $stmt->close();
+            return true;
         } else {
-            $this->response(false, "User not found");
-            return null;
+            $stmt->close();
+            return false;
         }
     }
 
@@ -442,6 +516,248 @@ class auctionApi
 
         return $code;
     }
+
+    function loginImplement($email_given,$password_given)
+    {
+        if($email_given == null || $password_given == null)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Invalid Input"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+
+        if(!$this->is_email_valid($email_given))
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Invalid Email"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+
+        global $db;
+        $query = "SELECT * FROM users WHERE email = ?";
+        try {
+            $stmt = $db->prepare($query);
+            $stmt->bind_param("s", $email_given);
+            $stmt->execute();
+
+            // Bind the result variable
+            $stmt->bind_result($id,$username,$password,$email,$created_at);
+
+            // Fetch the user data
+            $stmt->fetch();
+
+            // Return the user data
+            $user = [
+                'id' => $id,
+                'username' => $username,
+                'password' => $password,
+                'email' => $email,
+                'created_at' => $created_at,
+            ];
+
+            if($email == null)
+            {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => "User not found"
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+            else{
+                if(!$this->is_password_valid($password_given,$password))
+                {
+                    header('Content-Type: application/json');
+                    http_response_code(400);
+                    $timestamp = round(microtime(true) * 1000);
+                    $response = array(
+                        "status" => "Fail",
+                        "timestamp" => $timestamp,
+                        "data" => "Wrong Password"
+                    );
+                    echo json_encode($response, JSON_PRETTY_PRINT);
+                    die();
+                }
+                else{
+                    header('Content-Type: application/json');
+                    http_response_code(200);
+                    $timestamp = round(microtime(true) * 1000);
+                    $response = array(
+                        "status" => "success",
+                        "timestamp" => $timestamp,
+                        "data" => $user
+                    );
+                    echo json_encode($response, JSON_PRETTY_PRINT);
+                    die();
+                }
+            }
+
+        } catch (Exception $e) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e->getMessage()
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
+
+    function signUp($email_given,$username_given,$password_given)
+    {
+        if($email_given == null || $password_given == null || $username_given == null)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Invalid Input"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+
+        if(!$this->is_email_valid($email_given))
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Invalid Email"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+
+        if($this->getUser($email_given))
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "User Already Exists"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+        else{
+            global $db;
+
+            $hashed_password = $this->argon2i($password_given);
+
+            $query = "INSERT INTO users (username,password,email) VALUES (?,?,?);";
+
+            try {
+                $stmt = $db->prepare($query);
+                $stmt->bind_param("sss", $username_given,$hashed_password,$email_given);
+                $stmt->execute();
+
+                header('Content-Type: application/json');
+                http_response_code(200);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Success",
+                    "timestamp" => $timestamp,
+                    "data" => "User Added"
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+
+            } catch (Exception $e) {
+                header('Content-Type: application/json');
+                http_response_code(500);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => "Error Adding New User"
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+        }
+    }
+
+    function is_password_valid( $password, $hashed_password)
+    {
+        if($this->verify_argon2i($password,$hashed_password))
+        {
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    function argon2i($password): string
+    {
+        //$salt = bin2hex(random_bytes(16)); // generate a random 16-byte salt
+        $hash_options = [
+            'memory_cost' => 1024,
+            'time_cost' => 2,
+            'threads' => 2
+        ];
+
+        // Hash the password with Argon2i
+        $hashed_password = password_hash($password, PASSWORD_ARGON2I, $hash_options);
+
+        // Return the hashed password and the salt
+        return $hashed_password ;
+    }
+
+    function verify_argon2i($password, $hashed_password): bool
+    {
+        return password_verify($password, $hashed_password);
+    }
+
+
+    function is_email_valid($email):bool
+    {
+        // Check if the email contains an "@" symbol
+        if (strpos($email, '@') === false) {
+            return false;
+        }
+
+        // Check if the email has at least one character before the "@" symbol
+        $username = explode('@', $email)[0];
+        if (empty($username)) {
+            return false;
+        }
+
+        if(filter_var($email,FILTER_VALIDATE_EMAIL)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
 }
 //user id is passed through the hidden input
 
@@ -525,6 +841,22 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
         //GetAllAuction
         $user_id = $requestData['user_id'] ?? null;
         $api->getUser($user_id);
+    }else if($type == 'GetProperty')
+    {
+        $property_id = $requestData['property_id'] ?? null;
+        $api->getProperty($property_id);
+    }
+    else if($type == 'Login'){
+        $email = $requestData['email'] ?? null;
+        $password = $requestData['password'] ?? null;
+        $api->loginImplement($email,$password);
+    }
+    else if($type=='Signup')
+    {
+        $email = $requestData['email'] ?? null;
+        $password = $requestData['password'] ?? null;
+        $username = $requestData['username'] ?? null;
+        $api->signUp($email,$username,$password);
     }
     else{
         header('Content-Type: application/json');

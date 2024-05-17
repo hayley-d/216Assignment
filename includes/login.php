@@ -11,25 +11,27 @@ require_once './login_view.php';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/login.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
 </head>
 <body>
 <div><a id="back-btn" href="../index.php">Back</a></div>
 <section>
-    <form id="login-form" method="POST" action="login_validate.php">
+    <form id="login-form">
 
         <div class="heading"><h3>Login</h3></div>
+
         <div>
-            <label for="username">Username</label>
+            <label for="email">Email</label>
         </div>
-        <div><input type="text" id="username" name="username" placeholder="Enter username" required></div>
+        <div><input type="text" id="email" name="email" placeholder="Enter Email" required></div>
 
         <div>
             <label for="password">Password</label>
         </div>
         <div><input type="password" id="password" name="password" placeholder="Enter password" required></div>
 
-        <div class="submit"><button type="submit" onclick="validateInformation()">Login</button> <button><a href="./signup.php">Sign Up</a></button></div>
+        <div class="submit"><button type="submit" id="login-button" onclick="findUser()">Login</button> <button><a href="./signup.php">Sign Up</a></button></div>
 
     </form>
 </section>
@@ -40,9 +42,48 @@ require_once './login_view.php';
 </div>
 
 <script>
-    function validateInformation()
+
+    $(document).ready(function() {
+        $('#login-button').click(function(event)
+        {
+            event.preventDefault(); // Prevent default form submission
+            findUser(); // Call the validation function
+        });
+    });
+
+    function findUser()
     {
-        document.getElementById('login-form').submit();
+
+        const email = $('#email').val();
+        const password = $('#password').val();
+        // Create data object to send
+        const data = {
+            type:'Login',
+            email:email,
+            password:password
+        }
+        // Make AJAX request to your API
+        $.ajax({
+            type: 'POST',
+            url: 'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            beforeSend: function(xhr) {
+                // Set authorization header
+                xhr.setRequestHeader('Authorization', 'Basic ' + btoa('u21528790' + ':' + '345803Moo'));
+            },
+            success: function(response) {
+                console.log(response);
+                //set the session variable
+                sessionStorage.setItem('email',response.data.email)
+                //take to the main page
+                window.location.href = "../index.php";
+            },
+            error: function(xhr, status, error) {
+                // Handle error response
+                console.error(xhr.responseText);
+            }
+        });
     }
 
     function redirect(){
