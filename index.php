@@ -73,7 +73,7 @@ require_once 'config_session.php';
  }
 
 </script>
-<?php require './auctions.php'; ?>
-<?php require './footer.php'; ?>
+
+
 </body>
 </html>
