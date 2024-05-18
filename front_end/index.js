@@ -18,6 +18,33 @@ socket.on('UpdateBid',(data) =>
     sessionStorage.setItem('auction',JSON.stringify(auctionData));
 })
 
+socket.on('EndBid',(data) =>
+{
+    console.log("Auction Ended: ",data.data);
+    const auctionData = data.data;
+
+    //Update amount
+    $('#bidAmount').text(`Current Bid: ${auctionData['highest_bid']}`);
+
+    $('#bid').attr('min', auctionData["highest_bid"]);
+
+    sessionStorage.setItem('auction',JSON.stringify(auctionData));
+
+    alert(`Auction has Ended: ${data.user} won with a bid of ${data.bid}`)
+    window.location.href = "../index.php";
+});
+
+socket.on('auctionNotJoined',(data)=>{
+    if(data === "done")
+    {
+        alert("Unable to Join:\nAuction has finished.");
+    }
+    else{
+        alert("Unable to Join:\nAuction has not started yet.")
+    }
+    $('#auctionCode').val('');
+});
+
 socket.on('auctionJoined', (data) => {
 
     console.log("Auction Data: ",data.data);
@@ -38,6 +65,8 @@ socket.on('auctionJoined', (data) => {
 
     //Set property location
     $('#property-location').text(auctionData['property_location'])
+
+    $('#bidUser').text(auctionData['user_email']);
 
     //Set information
     $('#bed').text(auctionData['property_bedrooms']);
