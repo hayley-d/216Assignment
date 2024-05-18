@@ -298,6 +298,8 @@ class auctionApi
             $auction_data['property_description'] = $obj['description'];
             $auction_data['property_image'] = $obj['image_path'];
 
+            $auction_data['user_email'] = $this->getUserByID($buyer);
+
             header('Content-Type: application/json');
             http_response_code(200);
             $timestamp = round(microtime(true) * 1000);
@@ -996,6 +998,58 @@ class auctionApi
         return password_verify($password, $hashed_password);
     }
 
+    function getUserByID($id)
+    {
+        try{
+            global $db;
+
+            $query = "SELECT username FROM users WHERE id = ?";
+
+            $stmt = $db->prepare($query);
+
+            if (!$stmt) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => 'Failed to prepare query'
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0)
+            {
+                $row = $result->fetch_assoc();
+                $user_email = $row['username'];
+                $stmt->close();
+
+                return $user_email;
+            } else {
+                $stmt->close();
+                return false;
+            }
+        }
+        catch(Exception $e)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
 
     function is_email_valid($email):bool
     {
