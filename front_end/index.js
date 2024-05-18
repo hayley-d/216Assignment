@@ -2,10 +2,20 @@ const socket = new io('http://localhost:2043');
 
 socket.on('connect', ()=>{
     console.log(`Client connected: ${socket.id}`);
+    socket.emit('registerUsername',sessionStorage.getItem('email'));
 });
 
-socket.on('update-bid',amount =>{
-    console.log("Updated Bid: " + amount);
+socket.on('UpdateBid',(data) =>
+{
+    console.log("Updated Auction: ",data.data);
+    const auctionData = data.data;
+
+    //Update amount
+    $('#bidAmount').text(`Current Bid: ${auctionData['highest_bid']}`);
+
+    $('#bid').attr('min', auctionData["highest_bid"]);
+
+    sessionStorage.setItem('auction',JSON.stringify(auctionData));
 })
 
 socket.on('auctionJoined', (data) => {
@@ -53,6 +63,9 @@ socket.on('auctionJoined', (data) => {
         $('#amenities').append(amenityDiv);
     });
 
+    $('#bid').attr('min', auctionData["highest_bid"]);
+
+    sessionStorage.setItem('auction',JSON.stringify(auctionData));
 
     hideCode();
     showAuction();
@@ -80,6 +93,13 @@ $(document).ready(function(){
     var formattedDateTime = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
     console.log(formattedDateTime);
     socket.emit('GetAllAuctions',formattedDateTime);
+
+    //bid-form
+    $('#bidButton').click(function(event)
+    {
+        event.preventDefault(); // Prevent default form submission
+        makeBid(); // Call the validation function
+    });
 });
 
 
@@ -134,3 +154,31 @@ function populateAuctions(auctions)
         $('#ongoing-auctions-container').append(auctionCard);
     })
 }
+
+function makeBid()
+{
+    //Get the bid amount
+    const amount = parseInt($('#bid').val());
+
+    const currentAuction = JSON.parse(sessionStorage.getItem('auction'));
+
+    if(amount < parseInt(currentAuction['highest_bid'])){
+        //bid not large enough
+        $('#bid').val('');
+        alert("Bid not large enough");
+    }
+    else{
+        //Make object
+        const obj = {
+            type:'UpdateAuction',
+            code:currentAuction['auction_code'],
+            start:currentAuction['start'],
+            end:currentAuction['end'],
+            highest_bid:amount,
+            buyer:sessionStorage.getItem('email')
+        }
+        console.log(obj);
+        socket.emit('MakeBid', obj);
+    }
+}
+
