@@ -8,15 +8,27 @@ $requestData = json_decode($json,true);
 
 class auctionApi
 {
-    public function createAuction(string $name,int $property_id,int $user_id,$start_time,$end_time)
+    public function createAuction( $name, $property_id, $user_email,$start_time,$end_time)
     {
         global $db;
-        if($name == null || $property_id == null || $user_id == null || $start_time == null || $end_time == null)
+        if($name == null || $property_id == null || $user_email == null || $start_time == null || $end_time == null)
         {
-
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => 'Missing auction details'
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
         }
+
         $name = filter_var($name, FILTER_SANITIZE_STRING);
-        $user_id = filter_var($user_id, FILTER_SANITIZE_NUMBER_INT);
+
+        //get the userId
+        $user_id = (int) $this->getUserId($user_email);
 
         // Convert start_time and end_time to DateTime objects for comparison
         $start_datetime = new DateTime($start_time);
@@ -25,14 +37,18 @@ class auctionApi
         // Check if start time is before end time
         if($start_datetime >= $end_datetime)
         {
+            header('Content-Type: application/json');
             http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Start time is before the end time",
-                "data" => []
-            ]);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Start date comes after end date"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
             die();
         }
+
         // Check if start time has passed and end time has not passed
         $current_datetime = new DateTime();
         $status = "ongoing";
@@ -58,8 +74,15 @@ class auctionApi
         $query = "INSERT INTO auctions (auction_name, property_id,user_id ,start, end, status, auction_code) VALUES (?, ?, ?, ?, ?, ?,?)";
         $stmt = $db->prepare($query);
         if (!$stmt) {
-            // Check for errors in prepare
-            echo "Prepare failed: (" . $db->errno . ") " . $db->error;
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "Failed to prepare query"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
             die();
         }
         $stmt->bind_param("siissss", $name, $property_id,$user_id, $start_time, $end_time, $status,$code);
@@ -67,14 +90,39 @@ class auctionApi
 
         // Check if the insertion was successful
         if (!$result) {
-            // Check for errors in execute
-            echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => "INSERT INTO auctions ('auction_name','property_id','user_id','start','end','status','highest_bid','buyer','auction_code') VALUES ('$name', '$property_id', '$user_id', '$start_time', '$end_time', '$status', '0', NULL, '$code')"
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
             die();
         }
         if ($stmt->affected_rows > 0) {
-            $this->response(true, "Auction created successfully");
+            header('Content-Type: application/json');
+            http_response_code(200);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Success",
+                "timestamp" => $timestamp,
+                "data" => 'Auction Created'
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
         } else {
-            $this->response(false, "Failed to create auction");
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => 'Failed to create auction'
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
         }
     }
 
@@ -253,22 +301,89 @@ class auctionApi
         }
     }
 
-    public function getAllAuctions()
+    public function getAllAuctions($date)
     {
-        global $db;
-        $query = "SELECT * FROM auctions WHERE status = 'ongoing'";
-        $stmt = $db->prepare($query);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $results = $result->fetch_all(MYSQLI_ASSOC);
+        try{
+            global $db;
+            //Update all auction statuses first
+            $this->updateAuctionsStatus($date);
 
-        foreach ($results as &$auction) {
-            $propertyId = $auction['property_id'];
-            $property = $this->getProperty($propertyId);
-            $auction['property'] = $property;
+            $query = "SELECT * FROM auctions WHERE status = 'ongoing'";
+            $stmt = $db->prepare($query);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $results = $result->fetch_all(MYSQLI_ASSOC);
+
+            foreach ($results as &$auction) {
+                $propertyId = $auction['property_id'];
+                $property = $this->getProperty($propertyId);
+                $auction['property'] = $property;
+            }
+
+            header('Content-Type: application/json');
+            http_response_code(200);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Success",
+                "timestamp" => $timestamp,
+                "data" => $results
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
         }
+        catch(Exception $e){
+            header('Content-Type: application/json');
+            http_response_code(500);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
 
-        $this->response(true,$results);
+    function updateAuctionsStatus($date){
+        try{
+            global $db;
+            // Get current date and time
+            $currentDateTime = $date;
+
+            // Update auctions with start date in the future to 'waiting'
+            $query = "UPDATE auctions SET status = 'waiting' WHERE start > ?";
+            $stmt = $db->prepare($query);
+            $stmt->bind_param("s", $currentDateTime);
+            $stmt->execute();
+            $stmt->close();
+
+            // Update auctions with start date in the past and end date in the future to 'ongoing'
+            $query = "UPDATE auctions SET status = 'ongoing' WHERE start <= ? AND end > ?";
+            $stmt = $db->prepare($query);
+            $stmt->bind_param("ss", $currentDateTime, $currentDateTime);
+            $stmt->execute();
+            $stmt->close();
+
+            // Update auctions with end date in the past to 'ended'
+            $query = "UPDATE auctions SET status = 'done' WHERE end <= ?";
+            $stmt = $db->prepare($query);
+            $stmt->bind_param("s", $currentDateTime);
+            $stmt->execute();
+            $stmt->close();
+        }
+        catch(Exception $e){
+            header('Content-Type: application/json');
+            http_response_code(500);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
     }
 
     public function getUserAuction( $userId)
@@ -389,45 +504,129 @@ class auctionApi
         }
     }
 
+    public function getUserId( $email)
+    {
+        try{
+            global $db;
+
+            // Sanitize the email input
+            $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+
+            $query = "SELECT id FROM users WHERE email = ?";
+
+            $stmt = $db->prepare($query);
+
+            if (!$stmt) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => 'Failed to prepare query'
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0)
+            {
+                $row = $result->fetch_assoc();
+                $user_id = $row['id'];
+                $stmt->close();
+                return $user_id;
+            } else {
+                $stmt->close();
+                return false;
+            }
+        }
+        catch(Exception $e)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
+
     public function createProperty($title,$price,$location,$bedroom,$bathroom,$parking,$amenities,$description,$image_url)
     {
-        global $db;
-        $title = filter_var($title, FILTER_SANITIZE_STRING);
-        $location = filter_var($location, FILTER_SANITIZE_STRING);
-        $price = filter_var($price, FILTER_SANITIZE_NUMBER_INT);
-        $bedroom = filter_var($bedroom, FILTER_SANITIZE_NUMBER_INT);
-        $bathroom = filter_var($bathroom, FILTER_SANITIZE_NUMBER_INT);
-        $parking = filter_var($parking, FILTER_SANITIZE_NUMBER_INT);
-        $amenities = filter_var($amenities, FILTER_SANITIZE_STRING);
-        $description = filter_var($description, FILTER_SANITIZE_STRING);
-        $image_url = filter_var($image_url, FILTER_SANITIZE_URL);
+        try{
+            global $db;
+            $title = filter_var($title, FILTER_SANITIZE_STRING);
+            $location = filter_var($location, FILTER_SANITIZE_STRING);
+            $price = filter_var($price, FILTER_SANITIZE_NUMBER_INT);
+            $bedroom = (int)filter_var($bedroom, FILTER_SANITIZE_NUMBER_INT);
+            $bathroom = (int)filter_var($bathroom, FILTER_SANITIZE_NUMBER_INT);
+            $parking = (int)filter_var($parking, FILTER_SANITIZE_NUMBER_INT);
+            $amenities = filter_var($amenities, FILTER_SANITIZE_STRING);
+            $description = filter_var($description, FILTER_SANITIZE_STRING);
+            $image_url = filter_var($image_url, FILTER_SANITIZE_URL);
 
-        $query = "INSERT INTO properties (title, price, location, bedroom, bathroom, parking, amenities, description,image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
-        $stmt = $db->prepare($query);
-        if (!$stmt) {
-            // Check for errors in prepare
-            echo "Prepare failed: (" . $db->errno . ") " . $db->error;
+            $query = "INSERT INTO properties (title, price, location, bedroom, bathroom, parking, amenities, description,image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
+            $stmt = $db->prepare($query);
+            if (!$stmt) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => 'Failed to prepare query while creating property'
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+            $stmt->bind_param("sdsdddsss",
+                $title,
+                $price,
+                $location,
+                $bedroom,
+                $bathroom,
+                $parking,
+                $amenities,
+                $description,
+                $image_url
+            );
+            $result = $stmt->execute();
+            if (!$result) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                $timestamp = round(microtime(true) * 1000);
+                $response = array(
+                    "status" => "Fail",
+                    "timestamp" => $timestamp,
+                    "data" => $stmt->error
+                );
+                echo json_encode($response, JSON_PRETTY_PRINT);
+                die();
+            }
+            $property_id = $stmt->insert_id;
+            return $property_id;
+        }
+        catch(Exception $e)
+        {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            $timestamp = round(microtime(true) * 1000);
+            $response = array(
+                "status" => "Fail",
+                "timestamp" => $timestamp,
+                "data" => $e
+            );
+            echo json_encode($response, JSON_PRETTY_PRINT);
             die();
         }
-        $stmt->bind_param("sdsdsssss",
-            $title,
-            $price,
-            $location,
-            $bedroom,
-            $bathroom,
-            $parking,
-            $amenities,
-            $description,
-            $image_url
-        );
-        $result = $stmt->execute();
-        if (!$result) {
-            // Check for errors in execute
-            echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
-            die();
-        }
-        $property_id = $stmt->insert_id;
-        return $property_id;
     }
 
     public function endAuction($code){
@@ -782,24 +981,24 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
 
     if($type == 'CreateAuction')
     {
-        $title = $requestData['property-title'] ?? null;
-        $price = $requestData['property-price'] ?? null;
-        $location = $requestData['property-location'] ?? null;
-        $bedroom = $requestData['property-bed'] ?? null;
-        $bathroom= $requestData['property-bath'] ?? null;
-        $parking= $requestData['property-parking'] ?? null;
-        $amenities = $requestData['property-amenities'] ?? null;
-        $description = $requestData['property-desc'] ?? null;
-        $image_url = $requestData['property-image'] ?? null;
+        $title = $requestData['propertyTitle'] ?? null;
+        $price = $requestData['propertyPrice'] ?? null;
+        $location = $requestData['propertyLocation'] ?? null;
+        $bedroom = $requestData['propertyBed'] ?? null;
+        $bathroom= $requestData['propertyBath'] ?? null;
+        $parking= $requestData['propertyParking'] ?? null;
+        $amenities = $requestData['propertyAmenities'] ?? null;
+        $description = $requestData['propertyDescription'] ?? null;
+        $image_url = $requestData['propertyImage'] ?? null;
         /*Create property*/
         $property_id = $api->createProperty($title,$price,$location,$bedroom,$bathroom,$parking,$amenities,$description,$image_url);
 
-        $name = $requestData['auction-name'] ?? null;
-        $user_id = $requestData['user_id'] ?? null;
+        $name = $requestData['auctionName'] ?? null;
+        $user_email = $requestData['userEmail'] ?? null;
         $start = $requestData['start'] ?? null;
         $end = $requestData['end'] ?? null;
         /*create auction*/
-        $api->createAuction($name,$property_id,$user_id,$start,$end);
+        $api->createAuction($name,$property_id,$user_email,$start,$end);
     }
     else if($type == 'UpdateAuction')
     {
@@ -813,9 +1012,18 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
 
     }
     else if($type == 'GetAuction'){
-        //GetAuction
-        $code = $requestData['code'] ?? null;
-        $api->getAuction($code);
+        $return = $requestData['return'] ?? null;
+        if($return === "*")
+        {
+            //Get all auctions
+            $date = $requestData['date'] ?? null;
+            $api->getAllAuctions($date);
+        }
+        else{
+            //GetAuction
+            $code = $requestData['code'] ?? null;
+            $api->getAuction($code);
+        }
     }
     else if($type == 'GetAllAuctions'){
         //GetAllAuction

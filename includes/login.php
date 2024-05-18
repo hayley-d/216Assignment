@@ -1,6 +1,6 @@
 <?php
 require_once '../config_session.php';
-require_once './login_view.php';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
