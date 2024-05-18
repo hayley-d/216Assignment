@@ -10,10 +10,84 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/auctionRoom.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <style>
+    #ongoing-auctions-container{
+      margin-top:70px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap:40px;
+    }
+
+    .auction-card{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      width:100%;
+
+    }
+
+    .card-content{
+      background-color: white;
+      border-radius: 20px;
+      color: #231f20;
+      width:50%;
+      padding:30px;
+      display: flex;
+      flex-direction: column;
+      gap:20px;
+      align-items: center;
+    }
+
+    h5{
+      color: #f26a8d;
+      font-size: 20px;
+    }
+
+    .join-auction-btn{
+      border:none;
+      border-radius: 10px;
+      padding:5px;
+      cursor: pointer;
+      width:40%;
+    }
+
+    .join-auction-btn:hover{
+      background-color: #f26a8d;
+      color: white;
+    }
+
+    .bed{
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-image: url("../img/bed.svg");
+      width: 30px;
+      height: 30px;
+    }
+
+    .bath{
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-image: url("../img/bath.svg");
+      width: 30px;
+      height: 30px;
+    }
+
+    .parking{
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-image: url("../img/car.svg");
+      width: 30px;
+      height: 30px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="back-btn"><a href="../../index.php">Back</a></div>
+<div class="back-btn"><a href="../index.php">Back</a></div>
 <div id="auction-room">
   <div class="heading"><h1 id="auctionName">Auction Name</h1></div>
   <div class="heading"><h2 id="bidAmount">Current Bid: R300 000</h2></div>
@@ -25,9 +99,9 @@
         <div class="property-title" id="property-title">3 Bedroom Apartment London</div>
         <div class="property-location" id="property-location">London, England</div>
         <div class="property-details">
-          <div id="bed"><div class="bed"></div>5</div>
-          <div id="bath"><div class="bath"></div>2</div>
-          <div id="parking"><div class="parking"></div>0</div>
+          <div id="bed"><div class="bed">Bedrooms: </div>5</div>
+          <div id="bath"><div class="bath">Bathrooms: </div>2</div>
+          <div id="parking"><div class="parking">Parking: </div>0</div>
         </div>
 
         <div class="property-description" id="description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut fringilla odio.
@@ -41,10 +115,11 @@
         </div>
 
         <div class="property-amenities" id="amenities">
-          <div><div class="pin"></div><p>Balcony</p></div>
+          <!--<div><div class="pin"></div><p>Balcony</p></div>
           <div><div class="pin"></div><p>Modern</p></div>
           <div><div class="pin"></div><p>London central</p></div>
-          <div><div class="pin"></div><p>Great Views</p></div>
+          <div><div class="pin"></div><p>Great Views</p></div>-->
+
         </div>
       </div>
 
@@ -73,6 +148,27 @@
     <button class="submit-btn" onclick="sendCode()">Join Auction</button>
   </div>
 </div>
+
+<div id="ongoing-auctions-container">
+  <!--<div class="auction-card">
+    <div class="card-content">
+      <h5>Auction Name</h5>
+      <p>Current Bid: R1000</p>
+      <p>Auction code: CODE123</p>
+      <button class="join-auction-btn" onclick="sendCode('CODE')">Join Auction</button>
+    </div>
+
+  </div>
+
+  <div class="auction-card">
+    <div class="card-content">
+      <h5>Auction Name</h5>
+      <p>Current Bid: R1000</p>
+      <p>Auction code: CODE123</p>
+      <button class="join-auction-btn" onclick="sendCode('CODE')">Join Auction</button>
+    </div>
+
+  </div>-->
 </div>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="index.js">
