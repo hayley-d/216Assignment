@@ -80,11 +80,10 @@ function isReservedPort(port) {
     return reservedPorts.includes(port);
 }
 
-
-
 function startServer(port) {
     let usernameSocketMap = {};
     let auctionData = {};
+    let auctionUsers = {}; // Store users currently bidding in each auction
     server.listen(port, () => {
         console.log(`Server listening on port ${port}`);
     });
@@ -99,15 +98,82 @@ function startServer(port) {
             // Remove the username and socket ID mapping when a client disconnects
             Object.keys(usernameSocketMap).forEach(username => {
                 if (usernameSocketMap[username] === socket.id) {
+                    Object.keys(auctionUsers).forEach(auctionID => {
+                        auctionUsers[auctionID] = auctionUsers[auctionID].filter(user => user !== username);
+                    });
                     delete usernameSocketMap[username];
                 }
             });
         });
 
-        socket.on('send-bid',(amount)=>{
-            console.log(amount);
-            io.emit('update-bid',amount);
-        })
+        socket.on('MakeBid',async (data)=>{
+            console.log(data);
+            try {
+                // Username and password for authorization
+                const username = 'u21528790';
+                const password = '345803Moo';
+
+                // Encode credentials as base64
+                const basicAuth = btoa(`${username}:${password}`);
+
+                // Make the API call using Axios
+                const response = await axios.post(
+                    'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
+                    data,
+                    {
+                        headers: {
+                            'Authorization': `Basic ${basicAuth}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+
+                console.log(`Bid Updated`);
+
+                // Make another API call to get the updated auction details
+                const getResponse = await axios.post(
+                    'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
+                    {
+                        type: 'GetAuction',
+                        code: data['code']
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Basic ${basicAuth}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                const updatedAuctionData = getResponse.data;
+
+                console.log(`Updated Auction Data Retrieved:`, updatedAuctionData);
+
+                // Notify the client who made the bid about success
+                socket.emit('UpdateBid', updatedAuctionData);
+
+                // Broadcast the updated auction details to all users in the auction
+                const auctionID = data['code'];
+                if (auctionUsers[auctionID]) {
+                    auctionUsers[auctionID].forEach(username => {
+                        const userSocketId = usernameSocketMap[username];
+                        if (userSocketId) {
+                            io.to(userSocketId).emit('UpdateBid', updatedAuctionData);
+                        }
+                    });
+                }
+
+            } catch (error)
+            {
+                console.error('Error updating auction:', error.message);
+                if (error.response && error.response.data) {
+                    console.error('Server error message:', error.response.data.message);
+                }
+                // Notify the client about the error
+                socket.emit('error', 'Failed to make bid');
+            }
+        });
 
         socket.on('registerUsername', (username) => {
             // Store the username and socket ID mapping
@@ -116,7 +182,7 @@ function startServer(port) {
         });
 
         //KILL Command
-        socket.on('kill', (username) => {
+        socket.on('KILL', (username) => {
             // Close the socket connection for the given username
             const socketId = usernameSocketMap[username];
             if (socketId) {
@@ -127,7 +193,7 @@ function startServer(port) {
             }
         });
 
-        socket.on('list', () => {
+        socket.on('LIST', () => {
             // Send the list of usernames and socket IDs to the client
             const userList = Object.entries(usernameSocketMap).map(([username, socketId]) => {
                 return { username, socketId };
@@ -135,34 +201,77 @@ function startServer(port) {
             socket.emit('userList', userList);
         });
 
+        socket.on('QUIT', () => {
+            console.log('Server going offline...');
+            // Notify all clients that the server is going offline
+            io.emit('serverShutdown', 'Server is going offline now.');
+
+            // Wait to ensure message delivery
+            setTimeout(() => {
+                // Disconnect all clients
+                io.sockets.sockets.forEach(s => s.disconnect(true));
+                // Close the server
+                server.close(() => {
+                    console.log('Server has been shut down.');
+                });
+            }, 1000);
+        });
+
+        socket.on('AUCTIONS', () => {
+            const auctionList = Object.entries(auctionData).map(([auctionID, auctionDetails]) => {
+                return {
+                    AuctionID: auctionID,
+                    AuctionName: auctionDetails['auction_name'],
+                    UsersBidding: auctionUsers[auctionID] || []
+                };
+            });
+            socket.emit('auctionList', auctionList);
+        });
+
         socket.on('joinAuction', async (code) => {
             try {
-
-                // Basic code validation (replace with your specific requirements)
-                if (!code || code.trim().length === 0) {
-                    throw new Error('Invalid auction code: empty input');
+                const usernameServer = Object.keys(usernameSocketMap).find(key => usernameSocketMap[key] === socket.id);
+                if (!usernameServer)
+                {
+                    socket.emit('error', 'Username not registered');
+                    return;
                 }
 
+                // Username and password for authorization
+                const username = 'u21528790';
+                const password = '345803Moo';
+
+                // Encode credentials as base64
+                const basicAuth = btoa(`${username}:${password}`);
+
                 // Make the API call using Axios
+                console.log("Code: ",code)
                 const response = await axios.post(
-                    '/api.php',
+                    'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
                     {
                         type: 'GetAuction',
                         code: code
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Basic ${basicAuth}`,
+                            'Content-Type': 'application/json'
+                        }
                     }
                 );
 
                 const auctionData = response.data;
-                console.log(`Auction data retrieved: ${JSON.stringify(auctionData)}`);
-
-                if (!auctionData || !auctionData.name || !auctionData['highest_bid']) {
-                    throw new Error('Invalid auction data received from API');
-                }
-
-                console.log(`Auction data retrieved: ${JSON.stringify(auctionData)}`);
+                console.log(`Auction data retrieved:`,auctionData);
 
                 // Store the retrieved auction data globally
                 this.auctionData = auctionData;
+
+                if (!auctionUsers[code]) {
+                    auctionUsers[code] = [];
+                }
+
+                auctionUsers[code].push(usernameServer);
+                console.log(`User ${usernameServer} joined auction ${code}`);
 
                 // Notify the client about successful join
                 socket.emit('auctionJoined', auctionData);
@@ -174,13 +283,117 @@ function startServer(port) {
             }
         });
 
+        socket.on('GetAllAuctions', async (date) => {
+            try {
+                // Username and password for authorization
+                const username = 'u21528790';
+                const password = '345803Moo';
+
+                // Encode credentials as base64
+                const basicAuth = btoa(`${username}:${password}`);
+
+                // Make the API call using Axios
+                const response = await axios.post(
+                    'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
+                    {
+                        type: 'GetAuction',
+                        return: '*',
+                        currentDate:date
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Basic ${basicAuth}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                const auctionData = response.data;
+                console.log(`Auction data retrieved:`,auctionData);
+
+                // Store the retrieved auction data globally
+                this.auctionData = auctionData;
+
+                //Return all the ongoing auctions
+                socket.emit('AllAuctions', auctionData);
+            } catch (error) {
+                console.error('Error joining auction:', error.message);
+                if (error.response && error.response.data) {
+                    console.error('Server error message:', error.response.data.message);
+                }
+            }
+        });
+
+        socket.on('createAuction', async (data) => {
+            try {
+                // Username and password for authorization
+                const username = 'u21528790';
+                const password = '345803Moo';
+
+                // Encode credentials as base64
+                const basicAuth = btoa(`${username}:${password}`);
+
+                //Add Auction code
+                data['code'] = generateAuctionID();
+                data['type'] = 'CreateAuction';
+
+                console.log(data);
+
+                // Make the API call using Axios
+                const response = await axios.post(
+                    'https://wheatley.cs.up.ac.za/u21528790/COS216/PA4/includes/auction_api.php',
+                    data,
+                    {
+                        headers: {
+                            'Authorization': `Basic ${basicAuth}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+
+                console.log(`Auction Created`);
+
+                // Notify the client about success
+                socket.emit('auctionCreated', auctionData);
+            } catch (error) {
+                console.error('Error joining auction:', error.message);
+                if (error.response && error.response.data) {
+                    console.error('Server error message:', error.response.data.message);
+                }
+            }
+        });
+
         socket.on('send', (data) => {
             io.emit('chat', data);
         });
-
-        // Emit the io instance to the client
-        //socket.emit('connect-with-io', io);
     });
+
+    // Utility function to generate unique AuctionID
+    function generateAuctionID() {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let randomString = '';
+        for (let i = 0; i < 10; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            randomString += characters[randomIndex];
+        }
+        return randomString;
+    }
+
+    // Periodic cleanup of disconnected sockets
+    setInterval(() => {
+        console.log('Running cleanup for disconnected sockets...');
+        io.sockets.sockets.forEach(socket => {
+            if (socket.disconnected) {
+                console.log(`Cleaning up disconnected socket: ${socket.id}`);
+                Object.keys(usernameSocketMap).forEach(username => {
+                    if (usernameSocketMap[username] === socket.id) {
+                        delete usernameSocketMap[username];
+                    }
+                });
+            }
+        });
+    }, 30000); // Run cleanup every 30 seconds
 }
 
 askForPort();
