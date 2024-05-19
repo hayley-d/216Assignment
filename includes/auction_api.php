@@ -653,7 +653,7 @@ class auctionApi
         }
     }
 
-    public function endAuction($code){
+    public function endAuction($code,$date){
         try{
             global $db;
             if ($code == null) {
@@ -671,9 +671,9 @@ class auctionApi
 
             $code = filter_var($code, FILTER_SANITIZE_STRING);
 
-            $query = "UPDATE auctions SET status = 'done' WHERE auction_code = ?";
+            $query = "UPDATE auctions SET status = 'done',  end = ? WHERE auction_code = ?";
             $stmt = $db->prepare($query);
-            $stmt->bind_param("s", $code);
+            $stmt->bind_param("ss", $date,$code);
             $stmt->execute();
             // Check if the update was successful
             if ($stmt->affected_rows > 0) {
@@ -1152,7 +1152,8 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
     else if($type == 'EndAuction'){
         //GetAllAuction
         $code = $requestData['code'] ?? null;
-        $api->endAuction($code);
+        $date = $requestData['date'] ?? null;
+        $api->endAuction($code,$date);
     }
     else if($type == 'updateBuyer'){
         //GetAllAuction

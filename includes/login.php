@@ -75,7 +75,8 @@ require_once '../config_session.php';
             success: function(response) {
                 console.log(response);
                 //set the session variable
-                sessionStorage.setItem('email',response.data.email)
+                sessionStorage.setItem('email',response.data.email);
+                sessionStorage.setItem('id',response.data.id)
                 //take to the main page
                 window.location.href = "../index.php";
             },
