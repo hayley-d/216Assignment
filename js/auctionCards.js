@@ -141,7 +141,7 @@ async function endAuction(auction_id)
 function endAuctionAPI(code) {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
-        let url = "../includes/api.php";
+        let url = "/auctionApi";
 
         let params = {
             type: "EndAuction",
@@ -209,7 +209,7 @@ function apiCallAuctions(user_id)
     return new Promise((resolve, reject) => {
         //Declare XML Request variable and request url
         let xhr = new XMLHttpRequest();
-        let url = "../includes/api.php";
+        let url = "../includes/auction_api.php";
         //Declare parameters
         let params = {
             type: `GetUserAuctions`,
