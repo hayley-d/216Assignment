@@ -84,6 +84,21 @@
       height: 30px;
     }
 
+    #endButton{
+      background-color: #f26a8d;
+      color: white;
+      border-radius: 20px;
+      border:none;
+      padding:5px;
+      cursor: pointer;
+    }
+
+    #endButton:hover{
+      background-color:#231f20;
+      color: white;
+
+    }
+
   </style>
 </head>
 <body>
@@ -144,7 +159,9 @@
 
 </div>
 
-
+<div id="button-manage-container">
+  <button  id="endButton" onclick="ManageAuction()">End Auction Early</button>
+</div>
 
 
 <div id="auction-code-container">
@@ -156,25 +173,7 @@
 </div>
 
 <div id="ongoing-auctions-container">
-  <!--<div class="auction-card">
-    <div class="card-content">
-      <h5>Auction Name</h5>
-      <p>Current Bid: R1000</p>
-      <p>Auction code: CODE123</p>
-      <button class="join-auction-btn" onclick="sendCode('CODE')">Join Auction</button>
-    </div>
 
-  </div>
-
-  <div class="auction-card">
-    <div class="card-content">
-      <h5>Auction Name</h5>
-      <p>Current Bid: R1000</p>
-      <p>Auction code: CODE123</p>
-      <button class="join-auction-btn" onclick="sendCode('CODE')">Join Auction</button>
-    </div>
-
-  </div>-->
 </div>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="index.js">

@@ -15,22 +15,18 @@ socket.on('UpdateBid',(data) =>
 
     $('#bid').attr('min', auctionData["highest_bid"]);
 
+    $('#bidUser').text(auctionData['user_email']);
+
     sessionStorage.setItem('auction',JSON.stringify(auctionData));
 })
 
-socket.on('EndBid',(data) =>
+socket.on('AuctionEnd',(data) =>
 {
     console.log("Auction Ended: ",data.data);
-    const auctionData = data.data;
 
-    //Update amount
-    $('#bidAmount').text(`Current Bid: ${auctionData['highest_bid']}`);
+    sessionStorage.removeItem('auction');
 
-    $('#bid').attr('min', auctionData["highest_bid"]);
-
-    sessionStorage.setItem('auction',JSON.stringify(auctionData));
-
-    alert(`Auction has Ended: ${data.user} won with a bid of ${data.bid}`)
+    alert(`Auction has Ended: ${data.data['user_email']} won with a bid of ${data.data['highest_bid']}`)
     window.location.href = "../index.php";
 });
 
@@ -43,6 +39,32 @@ socket.on('auctionNotJoined',(data)=>{
         alert("Unable to Join:\nAuction has not started yet.")
     }
     $('#auctionCode').val('');
+});
+
+//auctionEnded
+socket.on('auctionEnded',(data)=>{
+    alert(data);
+    window.location.href = "../index.php";
+});
+
+socket.on('auctionJoinError',(data)=>{
+
+    alert(`Unable to Join:\n${data}`);
+
+    $('#auctionCode').val('');
+});
+
+socket.on('auctionBidError',(data)=>{
+
+    alert(`Unable to Make Bid:\n${data}`);
+
+    $('#auctionCode').val('');
+});
+
+socket.on('auctionFetchError',(data)=>{
+
+    alert(`Unable to Fetch Auctions`);
+    window.location.href = "../index.php";
 });
 
 socket.on('auctionJoined', (data) => {
@@ -66,7 +88,10 @@ socket.on('auctionJoined', (data) => {
     //Set property location
     $('#property-location').text(auctionData['property_location'])
 
-    $('#bidUser').text(auctionData['user_email']);
+    if(auctionData['user_email'] !== false)
+    {
+        $('#bidUser').text(auctionData['user_email']);
+    }
 
     //Set information
     $('#bed').text(auctionData['property_bedrooms']);
@@ -90,6 +115,8 @@ socket.on('auctionJoined', (data) => {
 
         // Append the amenity div to the container
         $('#amenities').append(amenityDiv);
+
+
     });
 
     $('#bid').attr('min', auctionData["highest_bid"]);
@@ -98,6 +125,11 @@ socket.on('auctionJoined', (data) => {
 
     hideCode();
     showAuction();
+    if(auctionData['user_id'] == sessionStorage.getItem('id'))
+    {
+        $('#endButton').show();
+        $('#bid-form').hide();
+    }
 });
 
 socket.on('AllAuctions', (data) => {
@@ -112,7 +144,7 @@ $(document).ready(function(){
     // Create a new Date object, which represents the current date and time
     var currentDate = new Date();
 
-// Get the current year, month, day, hours, minutes, and seconds
+    // Get the current year, month, day, hours, minutes, and seconds
     var year = currentDate.getFullYear();
     var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Add leading zero if needed
     var day = ('0' + currentDate.getDate()).slice(-2); // Add leading zero if needed
@@ -129,6 +161,8 @@ $(document).ready(function(){
         event.preventDefault(); // Prevent default form submission
         makeBid(); // Call the validation function
     });
+
+    $('#endButton').hide();
 });
 
 
@@ -186,6 +220,9 @@ function populateAuctions(auctions)
 
 function makeBid()
 {
+
+    const currentDate = new Date().toISOString();
+
     //Get the bid amount
     const amount = parseInt($('#bid').val());
 
@@ -207,7 +244,32 @@ function makeBid()
             buyer:sessionStorage.getItem('email')
         }
         console.log(obj);
-        socket.emit('MakeBid', obj);
+        socket.emit('MakeBid', obj,currentDate);
     }
+}
+
+function ManageAuction()
+{
+    //update end time
+    var currentDate = new Date();
+    // Get the current year, month, day, hours, minutes, and seconds
+    var year = currentDate.getFullYear();
+    var month = ('0' + (currentDate.getMonth() + 1)).slice(-2); // Add leading zero if needed
+    var day = ('0' + currentDate.getDate()).slice(-2); // Add leading zero if needed
+    var hours = ('0' + currentDate.getHours()).slice(-2); // Add leading zero if needed
+    var minutes = ('0' + currentDate.getMinutes()).slice(-2); // Add leading zero if needed
+    var seconds = ('0' + currentDate.getSeconds()).slice(-2); // Add leading zero if needed
+    var formattedDateTime = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+
+    const currentAuction = JSON.parse(sessionStorage.getItem('auction'));
+
+    const obj = {
+        type:'EndAuction',
+        code:currentAuction['auction_code'],
+        date:formattedDateTime,
+    }
+
+    socket.emit('endAuction', obj);
+    //Kick all users out
 }
 
